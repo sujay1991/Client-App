@@ -36,6 +36,8 @@ public class AdvancedConnector : MonoBehaviour {
 	private int httpPort = 8080;				// HTTP port (for BlueBox connection)
 	private int httpsPort = 8443;				// HTTPS port (for protocol encryption initialization in non-websocket connections)
 
+    private SFSRoom _room;
+
 	// Please note above that ws port = http port and wss port = https port; this is because WebSocket and WebSocketSecure connection,
 	// tunnelled BlueBox communication and protocol encryption initialization all rely on the SmartFoxServer's internal web server
 	
@@ -123,6 +125,7 @@ public class AdvancedConnector : MonoBehaviour {
 			sfs.AddEventListener(SFSEvent.PING_PONG, OnPingPong);
             sfs.AddEventListener(SFSEvent.ROOM_JOIN, OnJoinRoom);
             sfs.AddEventListener(SFSEvent.ROOM_JOIN_ERROR, OnJoinRoomError);
+            sfs.AddEventListener(SFSEvent.EXTENSION_RESPONSE, OnExtensionResponse);
 
             sfs.AddLogListener(LogLevel.DEBUG, OnDebugMessage);
 			sfs.AddLogListener(LogLevel.INFO, OnInfoMessage);
@@ -267,15 +270,16 @@ public class AdvancedConnector : MonoBehaviour {
 	}
 	
 	private void OnLogin(BaseEvent evt) {
-		User user = (Sfs2X.Entities.User)evt.Params["user"];
+		User user = (User)evt.Params["user"];
 		
 		trace("Login successful");
 		trace("Username is: " + user.Name);
-        
-        sfs.Send(new Sfs2X.Requests.JoinRoomRequest("The Lobby"));
-		
-		// Enable lag monitor
-		if (lagMonitorToggle.isOn)
+
+        _room = new SFSRoom(0, "The Lobby");
+        sfs.Send(new Sfs2X.Requests.JoinRoomRequest(_room));
+
+        // Enable lag monitor
+        if (lagMonitorToggle.isOn)
 			sfs.EnableLagMonitor(true);
 	}
 	
@@ -289,12 +293,29 @@ public class AdvancedConnector : MonoBehaviour {
 	
     private void OnJoinRoom(BaseEvent evt)
     {
-        trace("OnJoingRoom: " + evt.Params["success"]);
+        trace("OnJoingRoom: ");
+        var reqParams = new Sfs2X.Entities.Data.SFSObject();
+        reqParams.PutInt("a", 25);
+        reqParams.PutInt("b", 17);
+
+        sfs.Send(new Sfs2X.Requests.ExtensionRequest("sum", reqParams, _room));
     }
 
     private void OnJoinRoomError(BaseEvent evt)
     {
         trace("OnJoinRoomFailed: " + (string) evt.Params["errorMessage"]);
+    }
+
+    private void OnExtensionResponse(BaseEvent evt)
+    {
+        var responseParams = (evt.Params["params"] as Sfs2X.Entities.Data.SFSObject);
+        if(responseParams == null)
+        {
+            trace("error: cannot get params from the message");
+        }
+        int result = responseParams.GetInt("res");
+        
+        trace("sum = " + result);
     }
 
     //----------------------------------------------------------
