@@ -126,6 +126,8 @@ public class AdvancedConnector : MonoBehaviour {
             sfs.AddEventListener(SFSEvent.ROOM_JOIN, OnJoinRoom);
             sfs.AddEventListener(SFSEvent.ROOM_JOIN_ERROR, OnJoinRoomError);
             sfs.AddEventListener(SFSEvent.EXTENSION_RESPONSE, OnExtensionResponse);
+            sfs.AddEventListener(SFSEvent.PUBLIC_MESSAGE, OnPublicMessage);
+            sfs.AddEventListener(SFSEvent.ROOM_VARIABLES_UPDATE, OnRoomVariableUpdated);
 
             sfs.AddLogListener(LogLevel.DEBUG, OnDebugMessage);
 			sfs.AddLogListener(LogLevel.INFO, OnInfoMessage);
@@ -214,7 +216,8 @@ public class AdvancedConnector : MonoBehaviour {
 	// SmartFoxServer event listeners
 	//----------------------------------------------------------
 	
-	private void OnConnection(BaseEvent evt) {
+	private void OnConnection(BaseEvent evt)
+    {
 		if ((bool)evt.Params["success"]) {
 			trace("Connection established successfully");
 			trace("SFS2X API version: " + sfs.Version);
@@ -316,6 +319,16 @@ public class AdvancedConnector : MonoBehaviour {
         int result = responseParams.GetInt("res");
         
         trace("sum = " + result);
+    }
+
+    private void OnPublicMessage(BaseEvent evt)
+    {
+        trace("OnPublicMessage: ");
+    }
+
+    private void OnRoomVariableUpdated(BaseEvent evt)
+    {
+        trace("OnRoomVariableUpdated: " );
     }
 
     //----------------------------------------------------------
